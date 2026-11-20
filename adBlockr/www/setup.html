@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>adBlockr setup</title><link rel=stylesheet href=/style.css></head><body>
+<header><h1>adBlockr setup</h1></header><main><form class=card method=post action=/save>
+<label>Wi-Fi network</label><select id=s onchange="document.getElementById('ssid').value=this.value"><option value="">Scanning...</option></select>
+<input id=ssid name=ssid placeholder="or type the network name" required style="margin-top:6px">
+<label>Wi-Fi password</label><input name=pass type=password>
+<label>Admin password for the web dashboard (user: admin, at least 8 characters; change both later in Settings)</label><input name=admin type=password minlength=8 required>
+<p><small>Recommended: give the blocker a fixed IP so your router can hand it out as the DNS server. Leave blank to use DHCP and set a reservation on the router instead.</small></p>
+<div class=two><div><label>Static IP (optional)</label><input name=ip placeholder="192.168.1.53"></div><div><label>Gateway</label><input name=gw placeholder="192.168.1.1"></div></div>
+<label>Subnet mask</label><input name=mask placeholder="255.255.255.0">
+<p><button class=pri>Save and reboot</button></p></form></main>
+<script>fetch('/scan').then(r=>r.json()).then(l=>{const s=document.getElementById('s');s.options[0].textContent='Choose...';l.forEach(n=>{const o=document.createElement('option');o.textContent=n;o.value=n;s.appendChild(o)})})</script>
+</body></html>

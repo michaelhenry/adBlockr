@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Settings - adBlockr</title><link rel=stylesheet href=/style.css></head><body>
+<svg width=0 height=0 style=position:absolute aria-hidden=true><defs>
+<symbol id=i-back viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+<symbol id=i-check viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id=i-wifioff viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M12 20h.01"/><path d="M3 3l18 18"/></symbol>
+</defs></svg>
+<header><a href=/ aria-label=Dashboard title=Dashboard style="margin:0 -8px 0 -12px"><svg class=ic aria-hidden=true><use href=#i-back /></svg></a><h1>Settings</h1></header><main>
+<form id=f class=card onsubmit="save(event)">
+<div class=two><div><label>Upstream DNS 1</label><input name=up1></div><div><label>Upstream DNS 2 (retry)</label><input name=up2></div></div>
+<label><input type=checkbox name=local style="width:auto"> Send local names (*.lan, *.home.arpa, single-label, private reverse lookups) to the router</label>
+<label><input type=checkbox name=subdom style="width:auto"> Also block subdomains of listed domains (stricter; use with "wildcard" lists)</label>
+<label>Blocklist URLs (one per line; hosts, domain or ||domain^ format)</label><textarea name=lists></textarea>
+<div class=two><div><label>Allowlist - never block (matches subdomains too)</label><textarea name=allow></textarea></div>
+<div><label>Custom blocklist (matches subdomains too)</label><textarea name=block></textarea></div></div>
+<div class=two><div><label>Screen brightness (10-255)</label><input name=bright type=number min=10 max=255></div>
+<div><label>Dim screen after (seconds, 0 = never)</label><input name=dim type=number min=0 max=3600></div></div>
+<label>Time zone (POSIX TZ string)</label><input name=tz>
+<div class=two><div><label>Admin username</label><input name=auser maxlength=32 autocomplete=username></div>
+<div><label>New admin password (leave blank to keep; 8+ characters)</label><input name=apass type=password minlength=8 autocomplete=new-password></div></div>
+<div class=row style="margin-top:14px"><button class=i aria-label=Save title=Save><svg class=ic aria-hidden=true><use href=#i-check /></svg></button><small id=msg></small></div></form>
+<div class=card style="margin-top:12px"><b>Firmware</b><p><small>adBlockr runs on MicroPython. To update, connect USB and run <span class=mono>tools/deploy.sh</span> from the GitHub folder; settings and lists are kept.</small></p></div>
+<div class=card style="margin-top:12px"><b>Wi-Fi</b><p><small>Forget the Wi-Fi network and reboot into the setup hotspot.</small></p><button class="i danger" aria-label="Reset Wi-Fi" title="Reset Wi-Fi" onclick="if(confirm('Forget Wi-Fi and reboot?'))fetch('/api/wifireset',{method:'POST'})"><svg class=ic aria-hidden=true><use href=#i-wifioff /></svg></button></div>
+</main><script>
+const f=document.getElementById('f');
+fetch('/api/config').then(r=>r.json()).then(c=>{for(const k in c){const e=f.elements[k];if(!e)continue;if(e.type=='checkbox')e.checked=c[k];else e.value=c[k]}});
+function save(ev){ev.preventDefault();const d=new URLSearchParams();for(const e of f.elements){if(!e.name)continue;d.append(e.name,e.type=='checkbox'?(e.checked?'1':'0'):e.value)}
+fetch('/api/config',{method:'POST',body:d}).then(r=>r.text()).then(t=>document.getElementById('msg').textContent=t)}
+</script></body></html>

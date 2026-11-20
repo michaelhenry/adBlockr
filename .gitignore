@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.mpy
+.venv/
+# settings exports contain Wi-Fi and admin passwords
+settings.json

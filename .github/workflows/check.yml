@@ -1,0 +1,20 @@
+name: check
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile for MicroPython (ESP32-C5, RISC-V, incl. viper)
+        run: |
+          pip install mpy-cross==1.29.0.post2
+          for f in adBlockr/*.py; do mpy-cross -march=rv32imc -o /tmp/x.mpy "$f"; done
+      - name: Logic tests
+        run: python tests/test_logic.py
+      - name: Deploy script syntax
+        run: bash -n tools/deploy.sh
