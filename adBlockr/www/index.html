@@ -1,0 +1,44 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>adBlockr</title><link rel=stylesheet href=/style.css></head><body>
+<svg width=0 height=0 style=position:absolute aria-hidden=true><defs>
+<symbol id=i-pause viewBox="0 0 24 24"><rect x=6 y=4 width=4 height=16 rx=1 /><rect x=14 y=4 width=4 height=16 rx=1 /></symbol>
+<symbol id=i-play viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4" fill=currentColor /></symbol>
+<symbol id=i-refresh viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+<symbol id=i-gear viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx=12 cy=12 r=3 /></symbol>
+<symbol id=i-check viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+</defs></svg>
+<header><h1>adBlockr</h1><span id=pill class=pill></span><a href=/settings aria-label=Settings title=Settings><svg class=ic aria-hidden=true><use href=#i-gear /></svg></a></header><main>
+<div class=grid>
+<div class=card><h3>Queries today</h3><div class=big id=q>-</div></div>
+<div class=card><h3>Blocked today</h3><div class="big b" id=bl>-</div></div>
+<div class=card><h3>Blocked %</h3><div class="big l" id=pct>-</div></div>
+<div class=card><h3>Domains on list</h3><div class=big id=dom>-</div><small id=upd></small></div>
+</div>
+<div class=card style="margin-top:12px"><div class=row><b>Last hour</b><small>grey = queries, red = blocked</small></div><canvas id=cv width=900 height=120></canvas></div>
+<div class=row style="margin:12px 0"><button id=pb class=i onclick=pause() aria-label="Pause 5 min" title="Pause 5 min"><svg class=ic aria-hidden=true><use href=#i-pause /></svg></button><button class=i onclick="post('/api/update')" aria-label="Update list now" title="Update list now"><svg class=ic aria-hidden=true><use href=#i-refresh /></svg></button><small id=meta></small></div>
+<div class=two>
+<div class=card><b>Top blocked today</b><table id=top></table></div>
+<div class=card><b>Recent queries</b><table id=log></table></div>
+</div></main>
+<script>
+const $=id=>document.getElementById(id),cs=v=>getComputedStyle(document.documentElement).getPropertyValue(v);let paused=false;
+function post(u){return fetch(u,{method:'POST'}).then(()=>load())}
+function pause(){post(paused?'/api/pause?s=0':'/api/pause?s=300')}
+function allow(d){if(confirm('Always allow '+d+' (and its subdomains)?'))post('/api/allow?d='+encodeURIComponent(d))}
+function n(v){return v.toLocaleString()}
+function ago(t){if(!t)return'never';let d=Date.now()/1000-t;return d<90?'just now':d<5400?Math.round(d/60)+' min ago':d<172800?Math.round(d/3600)+' h ago':Math.round(d/86400)+' days ago'}
+function draw(h){const c=$('cv'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);let m=1;h.forEach(e=>m=Math.max(m,e[0]));const w=c.width/h.length;
+h.forEach((e,i)=>{let a=e[0]/m*110,b=e[1]/m*110;x.fillStyle=cs('--bar');x.fillRect(i*w+1,118-a,w-2,a);x.fillStyle=cs('--bad');x.fillRect(i*w+1,118-b,w-2,b)})}
+function load(){fetch('/api/stats').then(r=>r.json()).then(s=>{
+$('q').textContent=n(s.queries);$('bl').textContent=n(s.blocked);$('pct').textContent=s.pct+'%';$('dom').textContent=n(s.list.domains);
+$('upd').textContent=s.list.updating?('updating '+s.list.src+'/'+s.list.srcs+': '+n(s.list.progress)):('updated '+ago(s.list.last))+(s.list.err?' - '+s.list.err:'');
+paused=s.paused;{const b=$('pb'),l=paused?'Resume ('+Math.ceil(s.pause_s/60)+' min left)':'Pause 5 min';b.className=paused?'i warn':'i';b.innerHTML='<svg class=ic aria-hidden=true><use href=#i-'+(paused?'play':'pause')+' /></svg>';b.ariaLabel=b.title=l}
+let p=$('pill');if(s.list.updating){p.textContent='Updating';p.className='pill upd'}else if(paused){p.textContent='Paused '+Math.ceil(s.pause_s/60)+' min';p.className='pill pau'}else{p.textContent='Protected';p.className='pill act'}
+$('meta').textContent=s.ssid+' ('+(s.ch>14?'5':'2.4')+' GHz, '+s.rssi+' dBm) - upstream avg '+s.lat+' ms - up '+Math.floor(s.up/3600)+' h - v'+s.ver;
+draw(s.hist);
+$('top').innerHTML='<tr><th>Domain</th><th>Hits</th><th></th></tr>'+s.top.map(e=>`<tr><td class=mono>${e[0]}</td><td>${e[1]}</td><td><a class=x role=button tabindex=0 aria-label="Allow ${e[0]}" title=Allow onclick="allow('${e[0]}')"><svg class=ic aria-hidden=true><use href=#i-check /></svg></a></td></tr>`).join('');
+$('log').innerHTML='<tr><th>Time</th><th>Client</th><th>Type</th><th>Domain</th></tr>'+s.log.map(e=>{let c=e[4]==1?'b':e[4]==2?'l':'';let t=e[0]?new Date(e[0]*1000).toLocaleTimeString():'';
+return `<tr><td>${t}</td><td>${e[2]}</td><td>${e[3]}</td><td class="mono ${c}">${e[1]}${e[4]==1?` <a class=x role=button tabindex=0 aria-label="Allow ${e[1]}" title=Allow onclick="allow('${e[1]}')"><svg class=ic aria-hidden=true><use href=#i-check /></svg></a>`:''}</td></tr>`}).join('');
+})}
+load();setInterval(load,3000);
+</script></body></html>
